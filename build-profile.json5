@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.cer",
-          "storePassword": "0000001A2CB4BB651B108413A1569325B8DB6C1158D11190DF2AC7B4051E2DDAD3ECEC784AD4A8747BA3",
+          "certpath": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlxHarmony_B6i3wX8u93wl3PcSnL7_90ufZnWbYQrLmKbdSOBWsMU=.cer",
+          "storePassword": "0000001B87CEA7B7FFA87A5B47DE3B332AFB4D8B0AC634E0639A65C2FA45F2D60201902F456E52B677CBC1",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001A8B7F531756CC09E04BFF6A3A1C58CDEF6F81E12C7A53C4856BC568CF017AFDD60CFED7982F9D",
-          "profile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.p7b",
+          "keyPassword": "0000001BFE9EBB78CDF67F0690A7F4AB24884D4FE213E6A8001CDDE4AB4779773D408E8789DA387647E0F7",
+          "profile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlxHarmony_B6i3wX8u93wl3PcSnL7_90ufZnWbYQrLmKbdSOBWsMU=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.p12"
+          "storeFile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlxHarmony_B6i3wX8u93wl3PcSnL7_90ufZnWbYQrLmKbdSOBWsMU=.p12"
         }
       }
     ],
