@@ -1,0 +1,50 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.cer",
+          "storePassword": "0000001A2CB4BB651B108413A1569325B8DB6C1158D11190DF2AC7B4051E2DDAD3ECEC784AD4A8747BA3",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A8B7F531756CC09E04BFF6A3A1C58CDEF6F81E12C7A53C4856BC568CF017AFDD60CFED7982F9D",
+          "profile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\Administrator\\.ohos\\config\\default_BlePlx_pBdPhREbNh3A17Mvzpy308mmKqTdAAONw_fNtrIcAE4=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compileSdkVersion": "4.1.0(11)",
+        "compatibleSdkVersion": "4.1.0(11)",
+        "runtimeOS": "HarmonyOS",
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
