@@ -400,15 +400,7 @@ export class BleClientManager {
                                       transactionId: string,
                                       resolve: Resolve<ble.BLECharacteristic>,
                                       reject: Reject) {
-    var deviceId: string = null;
-    this.discoveredCharacteristics.forEach((value, key) => {
-      if (key.indexOf(serviceIdentifier + '#' + characteristicUUID) != -1) {
-        let keyList = key.split('#');
-        if (keyList.length > 0) {
-          deviceId = keyList[0];
-        }
-      }
-    });
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
     if (deviceId == null) {
       reject(-1, 'Characteristics does not exist.');
       return;
@@ -424,17 +416,7 @@ export class BleClientManager {
                             transactionId: string,
                             resolve: Resolve<ble.BLECharacteristic>,
                             reject: Reject) {
-    var deviceId: string = null;
-    var serviceIdentifier: string = null;
-    this.discoveredCharacteristics.forEach((value, key) => {
-      if (key.indexOf(characteristicIdentifier) != -1) {
-        let keyList = key.split('#');
-        if (keyList.length > 1) {
-          deviceId = keyList[0];
-          serviceIdentifier = keyList[1];
-        }
-      }
-    });
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier)
     if (deviceId == null || serviceIdentifier == null) {
       reject(-1, 'Characteristics does not exist.');
       return;
@@ -479,6 +461,18 @@ export class BleClientManager {
     });
   }
 
+  /**
+   * @description Write value to characteristic.
+   */
+  public writeCharacteristicForService(serviceIdentifier: string,
+                                       characteristicUUID: string,
+                                       valueBase64: string,
+                                       response: boolean,
+                                       transactionId: string,
+                                       resolve: Resolve<ble.BLECharacteristic>,
+                                       reject: Reject) {
+
+  }
 
 
 
@@ -511,6 +505,37 @@ export class BleClientManager {
     return result;
   }
 
+  // Mark: Tools ------------------------------------------------------------------------------------
+
+  // 获取deviceId
+  private getDeviceId(serviceId: string, characteristicId: string): string {
+    var deviceId: string = null;
+    this.discoveredCharacteristics.forEach((value, key) => {
+      if (key.indexOf(serviceId + '#' + characteristicId) != -1) {
+        let keyList = key.split('#');
+        if (keyList.length > 0) {
+          deviceId = keyList[0];
+        }
+      }
+    });
+    return deviceId;
+  }
+
+  // 获取deviceId和serviceId
+  private getDeviceIdAndServiceId(characteristicId: string): [string, string] {
+    var deviceId: string = null;
+    var serviceId: string = null;
+    this.discoveredCharacteristics.forEach((value, key) => {
+      if (key.indexOf(characteristicId) != -1) {
+        let keyList = key.split('#');
+        if (keyList.length > 1) {
+          deviceId = keyList[0];
+          serviceId = keyList[1];
+        }
+      }
+    });
+    return [deviceId, serviceId];
+  }
 }
 
 function value(value: string, index: number, array: string[]): void {
