@@ -5,6 +5,7 @@ import { Descriptor } from './Descriptor'
 import { IdGenerator } from './utils/IdGenerator';
 import { IdGeneratorKey } from './utils/IdGeneratorKey';
 import Logger from './Logger';
+import { ValuesBucket } from '@kit.ArkData';
 
 export class Characteristic {
 
@@ -136,5 +137,22 @@ export class Characteristic {
 
   public logValue(message: string, value: ArrayBuffer) {
     Logger.debug(message);
+  }
+
+  public toJSObject(characteristic:Characteristic):Object{
+    return {
+      "id":characteristic.getId(),
+      "uuid":characteristic.getUuid(),
+      "deviceID":characteristic.getDeviceId(),
+      "serviceID":characteristic.getServiceID(),
+      "serviceUUID":characteristic.getServiceUUID(),
+      "isReadable":characteristic.isReadable(),
+      "isWritableWithResponse":characteristic.isWritableWithResponse(),
+      "isWritableWithoutResponse":characteristic.isWritableWithoutResponse(),
+      "isNotifiable":characteristic.isNotifiable(),
+      "isNotifying":characteristic.isNotifying(),
+      "isIndicatable":characteristic.isIndicatable(),
+      "value":characteristic.getValue(),
+    };
   }
 }
