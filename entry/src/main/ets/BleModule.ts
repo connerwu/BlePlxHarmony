@@ -7,7 +7,6 @@ import { constant } from '@kit.ConnectivityKit';
 import { JSON } from '@kit.ArkTS';
 
 export class BleClientManager {
-
   // 连接的设备
   private connectedDevices: Map<string, ble.GattClientDevice> = new Map<string, ble.GattClientDevice>();
 
@@ -26,7 +25,7 @@ export class BleClientManager {
   }
 
   //对端设备地址， 例如：“XX:XX:XX:XX:XX:XX”。
-  creatGattClientDevice(deviceId:string){
+  creatGattClientDevice(deviceId: string) {
     try {
       let device: ble.GattClientDevice = ble.createGattClientDevice(deviceId);
     } catch (err) {
@@ -35,7 +34,7 @@ export class BleClientManager {
   }
 
   ///获取和当前设备连接的BLE设备
-  getConnectedBLEDevices():Array<string>{
+  getConnectedBLEDevices(): Array<string> {
     let result: Array<string> = [];
     try {
       result = ble.getConnectedBLEDevices();
@@ -55,10 +54,10 @@ export class BleClientManager {
   public startDeviceScan(filteredUUIDs?: Array<string>, options?: Map<string, number>, callback?: Function) {
     try {
       ble.on("BLEDeviceFind", (data: Array<ble.ScanResult>) => {
-        Logger.debug('BLE scan device find result = '+ JSON.stringify(data));
+        Logger.debug('BLE scan device find result = ' + JSON.stringify(data));
         callback?.(data);
       });
-      
+
       ///表示扫描结果过滤策略集合，如果不使用过滤的方式，该参数设置为null。
       let filters: Array<ble.ScanFilter> = null;
       if (filteredUUIDs && filteredUUIDs.length > 0) {
@@ -70,7 +69,7 @@ export class BleClientManager {
           filters.push(scanFilter);
         })
       }
-      
+
       ///表示扫描的参数配置，可选参数。
       let scanOptions: ble.ScanOptions = null;
       if (options) {
@@ -135,7 +134,7 @@ export class BleClientManager {
       return;
     }
 
-    device.getRssiValue((err: BusinessError, data: number)=> {
+    device.getRssiValue((err: BusinessError, data: number) => {
       console.info('rssi err ' + JSON.stringify(err));
       console.info('rssi value' + JSON.stringify(data));
       if (err == null) {
@@ -456,7 +455,7 @@ export class BleClientManager {
     characteristic.characteristicValue = stringToArrayBuffer(valueBase64);
 
     device.writeCharacteristicValue(characteristic, response ? ble.GattWriteType.WRITE : ble.GattWriteType.WRITE_NO_RESPONSE).then(value => {
-      Logger.debug('Write characteristic: ' + JSON.stringify(characteristic), + ' value: ' + valueBase64);
+      Logger.debug('Write characteristic: ' + JSON.stringify(characteristic), +' value: ' + valueBase64);
       resolve(characteristic);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
@@ -580,14 +579,162 @@ export class BleClientManager {
 
 
 
+
   // Mark: Characteristics operations ------------------------------------------------------------------------------------
 
-  // readDescriptorForDevice
+  /**
+   * @description Read value to descriptor.
+   */
+  public readDescriptorForDevice(deviceId: string,
+                                 serviceUUID: string,
+                                 characteristicUUID: string,
+                                 descriptorUUID: string,
+                                 transactionId: string,
+                                 resolve: Resolve<ble.BLEDescriptor>,
+                                 reject: Reject) {
+    let device = this.connectedDevices.get(deviceId);
+    if (!device) {
+      reject(-1, 'The device is not connected.');
+      return;
+    }
+
+    let characteristic = this.discoveredDescriptors.get(deviceId + '#' + serviceUUID + '#' + characteristicUUID + '#' + descriptorUUID);
+    if (!characteristic) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+    device.readDescriptorValue(characteristic).then(value => {
+      resolve(value);
+    }).catch(err => {
+      Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+      reject((err as BusinessError).code, (err as BusinessError).message, err);
+    });
+  }
 
 
+  /**
+   * @description Read value to descriptor.
+   */
+  public readDescriptorForService(serviceIdentifier: number, characteristicUUID: string, descriptorUUID: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
 
-  toJSMap(device: ble.GattClientDevice):Map<string,ValueType>{
-    let result : Map<string,ValueType> = new Map<string,ValueType>();
+    this.readDescriptorForDevice(deviceId, serviceIdentifier, descriptorUUID, characteristicUUID, transactionId, resolve, reject);
+  }
+
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public readDescriptorForCharacteristic(characteristicIdentifier: number, descriptorUUID: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier)
+    if (deviceId == null || serviceIdentifier == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.readDescriptorForDevice(deviceId, serviceIdentifier, descriptorUUID, characteristicIdentifier, transactionId, resolve, reject);
+  }
+
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public readDescriptor(descriptorIdentifier: number, descriptorUUID: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier)
+    if (deviceId == null || serviceIdentifier == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.readDescriptorForDevice(deviceId, serviceIdentifier, descriptorUUID, characteristicIdentifier, transactionId, resolve, reject);
+  }
+
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public writeDescriptorForDevice(deviceId: string, serviceUUID: string, characteristicUUID: string, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    let device = this.connectedDevices.get(deviceId);
+    if (!device) {
+      reject(-1, 'The device is not connected.');
+      return;
+    }
+
+    let descriptor: ble.BLEDescriptor = {
+      serviceUuid: serviceUUID,
+      characteristicUuid: characteristicUUID,
+      descriptorUuid: descriptorUUID,
+      descriptorValue: stringToArrayBuffer(valueBase64)
+    };
+
+    device.writeDescriptorValue(descriptor).then(() => {
+      resolve(descriptor);
+    }).catch(err => {
+      Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+      reject((err as BusinessError).code, (err as BusinessError).message, err);
+    });
+
+  }
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public writeDescriptorForService(serviceIdentifier: number, characteristicUUID: string, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.writeDescriptorForDevice(deviceId, serviceIdentifier, characteristicUUID, descriptorUUID, valueBase64, transactionId, resolve, reject);
+
+  }
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public writeDescriptorForCharacteristic(characteristicIdentifier: number, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.writeDescriptorForDevice(deviceId, serviceIdentifier, characteristicUUID, descriptorUUID, valueBase64, transactionId, resolve, reject);
+
+  }
+
+  /**
+   * @description Read value to descriptor.
+   */
+  public writeDescriptor(descriptorIdentifier: number, valueBase64: string, transactionId: string, resolve: Resolve<ble.BLEDescriptor>, reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.writeDescriptorForDevice(deviceId, serviceIdentifier, characteristicUUID, descriptorUUID, valueBase64, transactionId, resolve, reject);
+
+  }
+
+  public addListener(eventName: string) {
+    // Keep: Required for RN built in Event Emitter Calls.
+
+  }
+
+  public removeListeners(count: number) {
+    // Keep: Required for RN built in Event Emitter Calls.
+
+  }
+
+
+  toJSMap(device: ble.GattClientDevice): Map<string, ValueType> {
+    let result: Map<string, ValueType> = new Map<string, ValueType>();
     // result
 
     return result;
