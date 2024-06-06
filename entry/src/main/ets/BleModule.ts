@@ -6,6 +6,7 @@ import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
 import { constant } from '@kit.ConnectivityKit';
 
 export class BleClientManager {
+  
   // 连接的设备
   private connectedDevices: Map<string, ble.GattClientDevice> = new Map<string, ble.GattClientDevice>();
 
