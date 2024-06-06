@@ -4,6 +4,7 @@ import { ValueType } from '@kit.ArkData';
 import Logger from './Logger'
 import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
 import { constant } from '@kit.ConnectivityKit';
+import { JSON } from '@kit.ArkTS';
 
 export class BleClientManager {
 
@@ -239,14 +240,16 @@ export class BleClientManager {
     device.getServices().then(services => {
       // services
       services.forEach(service => {
-        Logger.debug('serviceUuid： ' + service.serviceUuid);
+        // Logger.debug('serviceUuid： ' + service.serviceUuid);
         this.discoveredServices.set(deviceIdentifier + '#' + service.serviceUuid, service);
         // characteristics
         service.characteristics.forEach(characteristic => {
-          Logger.debug('characteristicUuid： ' + characteristic.characteristicUuid);
+          // Logger.debug('characteristicUuid： ' + characteristic.characteristicUuid);
           this.discoveredCharacteristics.set(deviceIdentifier + '#' + service.serviceUuid + '#' + characteristic.characteristicUuid, characteristic);
           // descriptors
           characteristic.descriptors.forEach(descriptor => {
+            Logger.debug('serviceUuid： ' + service.serviceUuid);
+            Logger.debug('characteristicUuid： ' + characteristic.characteristicUuid);
             Logger.debug('descriptorUuid： ' + descriptor.descriptorUuid);
             this.discoveredDescriptors.set(deviceIdentifier + '#' + service.serviceUuid + '#' + characteristic.characteristicUuid + '#' + descriptor.descriptorUuid, descriptor);
           })
@@ -416,7 +419,7 @@ export class BleClientManager {
                             transactionId: string,
                             resolve: Resolve<ble.BLECharacteristic>,
                             reject: Reject) {
-    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier)
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier);
     if (deviceId == null || serviceIdentifier == null) {
       reject(-1, 'Characteristics does not exist.');
       return;
@@ -471,10 +474,95 @@ export class BleClientManager {
                                        transactionId: string,
                                        resolve: Resolve<ble.BLECharacteristic>,
                                        reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
 
+    this.writeCharacteristicForDevice(deviceId, serviceIdentifier, characteristicUUID, valueBase64, response, transactionId, resolve, reject);
   }
 
+  /**
+   * @description Write value to characteristic.
+   */
+  public writeCharacteristic(characteristicIdentifier: string,
+                             valueBase64: string,
+                             response: boolean,
+                             transactionId: string,
+                             resolve: Resolve<ble.BLECharacteristic>,
+                             reject: Reject) {
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier)
+    if (deviceId == null || serviceIdentifier == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
 
+    this.writeCharacteristicForDevice(deviceId, serviceIdentifier, characteristicIdentifier, valueBase64, response, transactionId, resolve, reject)
+  }
+
+  /**
+   * @description Setup monitoring of characteristic value.
+   */
+  public monitorCharacteristicForDevice(deviceIdentifier: string,
+                                        serviceUUID: string,
+                                        characteristicUUID: string,
+                                        transactionId: string,
+                                        resolve: Resolve<ble.BLECharacteristic>,
+                                        reject: Reject) {
+    let device = this.connectedDevices.get(deviceIdentifier);
+    if (!device) {
+      reject(-1, 'The device is not connected.');
+      return;
+    }
+
+    let characteristic = this.discoveredCharacteristics.get(deviceIdentifier + '#' + serviceUUID + '#' + characteristicUUID);
+    if (!characteristic) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    device.setCharacteristicChangeNotification(characteristic, true).then(value => {
+      resolve(characteristic);
+    }).catch(err => {
+      Logger.debug(JSON.stringify(err));
+      Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+      reject((err as BusinessError).code, (err as BusinessError).message, err);
+    });
+  }
+
+  /**
+   * @description Setup monitoring of characteristic value.
+   */
+  public monitorCharacteristicForService(serviceIdentifier: string,
+                                         characteristicUUID: string,
+                                         transactionId: string,
+                                         resolve: Resolve<ble.BLECharacteristic>,
+                                         reject: Reject) {
+    var deviceId = this.getDeviceId(serviceIdentifier, characteristicUUID);
+    if (deviceId == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.monitorCharacteristicForDevice(deviceId, serviceIdentifier, characteristicUUID, transactionId, resolve, reject);
+  }
+
+  /**
+   * @description Setup monitoring of characteristic value.
+   */
+  public monitorCharacteristic(characteristicIdentifier: string,
+                               transactionId: string,
+                               resolve: Resolve<ble.BLECharacteristic>,
+                               reject: Reject) {
+    const [deviceId, serviceIdentifier] = this.getDeviceIdAndServiceId(characteristicIdentifier);
+    if (deviceId == null || serviceIdentifier == null) {
+      reject(-1, 'Characteristics does not exist.');
+      return;
+    }
+
+    this.monitorCharacteristicForDevice(deviceId, serviceIdentifier, characteristicIdentifier, transactionId, resolve, reject);
+  }
 
 
 

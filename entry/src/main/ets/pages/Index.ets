@@ -98,8 +98,12 @@ struct Index {
     // }, null);
 
     this.manager.discoverAllServicesAndCharacteristicsForDevice(deviceId, null, (value) => {
+      Logger.debug('222');
       this.testFunctionsAfterDiscovered(deviceId)
-    }, null);
+    }, () => {
+      // Logger.debug('333');
+      // this.testFunctionsAfterDiscovered(deviceId)
+    });
 
     // this.manager.readRSSIForDevice(deviceId, null, (value) => {
     //   Logger.debug('readRSSIForDevice:' + value);
@@ -139,10 +143,21 @@ struct Index {
     //   Logger.debug('readCharacteristic:' + JSON.stringify(value));
     // }, null);
 
-    this.manager.writeCharacteristicForDevice(deviceId, '6E400001-B5A3-F393-E0A9-E50E24DCCA9E', '6E400003-B5A3-F393-E0A9-E50E24DCCA9E', '123', true, null, (value) => {
-      Logger.debug('writeCharacteristicForDevice:' + JSON.stringify(value));
-    }, null);
+    // this.manager.writeCharacteristicForDevice(deviceId, '6E400001-B5A3-F393-E0A9-E50E24DCCA9E', '6E400003-B5A3-F393-E0A9-E50E24DCCA9E', '123', true, null, (value) => {
+    //   Logger.debug('writeCharacteristicForDevice:' + JSON.stringify(value));
+    // }, null);
 
+    // this.manager.writeCharacteristicForService('6E400001-B5A3-F393-E0A9-E50E24DCCA9E', '6E400003-B5A3-F393-E0A9-E50E24DCCA9E', '123', true, null, (value) => {
+    //   Logger.debug('writeCharacteristicForService:' + JSON.stringify(value));
+    // }, null);
+
+    // this.manager.writeCharacteristic('6E400003-B5A3-F393-E0A9-E50E24DCCA9E', '123', true, null, (value) => {
+    //   Logger.debug('writeCharacteristic:' + JSON.stringify(value));
+    // }, null);
+
+    this.manager.monitorCharacteristicForDevice(deviceId, '6E400001-B5A3-F393-E0A9-E50E24DCCA8E', '6E400003-B5A3-F393-E0A9-E50E24DCCA8E', null, (value) => {
+      Logger.debug('monitorCharacteristicForDevice:' + JSON.stringify(value));
+    }, null);
 
 
 

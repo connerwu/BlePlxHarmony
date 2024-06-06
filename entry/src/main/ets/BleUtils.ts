@@ -1,5 +1,6 @@
 import { BusinessError } from '@ohos.base';
 
+
 // export type Resolve = (value?: any) => void;
 
 // 成功回调函数
@@ -20,4 +21,18 @@ export function stringToArrayBuffer(string) {
   }
 
   return buffer;
+}
+
+export class BleUtils {
+  static instanceMap: Map<string, number> = new Map();
+
+  // 根据uuid生成instantId
+  static getInstanceId(uuid: string): number {
+    let value = this.instanceMap.get(uuid);
+    if (value == null) {
+      value = new Date().getTime();
+      this.instanceMap.set(uuid, value);
+    }
+    return value;
+  }
 }
