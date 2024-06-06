@@ -7,6 +7,7 @@ import { constant } from '@kit.ConnectivityKit';
 import { JSON } from '@kit.ArkTS';
 
 export class BleClientManager {
+  
   // 连接的设备
   private connectedDevices: Map<string, ble.GattClientDevice> = new Map<string, ble.GattClientDevice>();
 
