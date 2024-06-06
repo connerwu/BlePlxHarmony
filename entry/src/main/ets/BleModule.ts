@@ -19,31 +19,6 @@ export class BleClientManager {
   // Descriptors
   private discoveredDescriptors: Map<string, ble.BLEDescriptor> = new Map<string, ble.BLEDescriptor>();
 
-  constructor() {
-    let gattServer: ble.GattServer = ble.createGattServer();
-    console.info('gatt success');
-  }
-
-  //对端设备地址， 例如：“XX:XX:XX:XX:XX:XX”。
-  creatGattClientDevice(deviceId: string) {
-    try {
-      let device: ble.GattClientDevice = ble.createGattClientDevice(deviceId);
-    } catch (err) {
-      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-    }
-  }
-
-  ///获取和当前设备连接的BLE设备
-  getConnectedBLEDevices(): Array<string> {
-    let result: Array<string> = [];
-    try {
-      result = ble.getConnectedBLEDevices();
-    } catch (err) {
-      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-    }
-    return result;
-  }
-
   // Mark: Scanning ------------------------------------------------------------------------------------------------------
 
   /**
