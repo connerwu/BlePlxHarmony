@@ -95,4 +95,17 @@ export class Descriptor {
   public logValue(message: string, value: ArrayBuffer) {
     Logger.debug(message);
   }
+
+  public toJSObject(descriptor:Descriptor):Object{
+    return {
+      "id":descriptor.getId(),
+      "uuid":descriptor.getUuid(),
+      "deviceID":descriptor.getDeviceId(),
+      "serviceID":descriptor.getServiceId(),
+      "serviceUUID":descriptor.getServiceUuid(),
+      "characteristicUUID":descriptor.getCharacteristicUuid(),
+      "characteristicID":descriptor.getCharacteristicId(),
+      "value":descriptor.getValue(),
+    };
+  }
 }

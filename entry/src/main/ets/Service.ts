@@ -1,5 +1,6 @@
 import ble from '@ohos.bluetooth.ble';
 import { Characteristic } from './Characteristic';
+import { ValuesBucket, ValueType } from '@kit.ArkData';
 
 export class Service {
 
@@ -47,5 +48,14 @@ export class Service {
       characteristics.push(obj);
     });
     return characteristics;
+  }
+
+  public toJSObject(service:Service):ValuesBucket{
+    return {
+      "id":service.getId(),
+      "uuid":service.getUuid(),
+      "deviceID":service.getDeviceID(),
+      "isPrimary":service.isPrimary(),
+    };
   }
 }
