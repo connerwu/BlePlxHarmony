@@ -6,7 +6,7 @@ import { Service } from '../Service';
 
 export class ServiceFactory {
   create(deviceId: string, btGattService: ble.GattService): Service {
-    const id = IdGenerator.getIdForKey(new IdGeneratorKey(deviceId, btGattService.serviceUuid.toString(), BleUtils.getInstanceId(btGattService.serviceUuid)));
+    const id = IdGenerator.getIdForKey(new IdGeneratorKey(deviceId, btGattService.serviceUuid, BleUtils.getInstanceId(btGattService.serviceUuid)));
     return new Service(id, deviceId, btGattService);
   }
 }
