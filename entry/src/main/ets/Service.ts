@@ -50,12 +50,12 @@ export class Service {
     return characteristics;
   }
 
-  public toJSObject(service:Service):ValuesBucket{
+  public asJSObject(): ValuesBucket {
     return {
-      "id":service.getId(),
-      "uuid":service.getUuid(),
-      "deviceID":service.getDeviceID(),
-      "isPrimary":service.isPrimary(),
+      "id": this.getId(),
+      "uuid": this.getUuid(),
+      "deviceID": this.getDeviceID(),
+      "isPrimary": this.isPrimary(),
     };
   }
 }

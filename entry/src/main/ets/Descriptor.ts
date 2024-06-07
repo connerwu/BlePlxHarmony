@@ -3,6 +3,8 @@ import { Characteristic } from './Characteristic';
 import { IdGenerator } from './utils/IdGenerator';
 import { IdGeneratorKey } from './utils/IdGeneratorKey';
 import Logger from './Logger'
+import { arrayBufferToBase64 } from './BleUtils';
+import { ValuesBucket } from '@kit.ArkData';
 
 export class Descriptor {
   private characteristicId: number;
@@ -96,16 +98,16 @@ export class Descriptor {
     Logger.debug(message);
   }
 
-  public toJSObject(descriptor:Descriptor):Object{
+  public asJSObject(): ValuesBucket {
     return {
-      "id":descriptor.getId(),
-      "uuid":descriptor.getUuid(),
-      "deviceID":descriptor.getDeviceId(),
-      "serviceID":descriptor.getServiceId(),
-      "serviceUUID":descriptor.getServiceUuid(),
-      "characteristicUUID":descriptor.getCharacteristicUuid(),
-      "characteristicID":descriptor.getCharacteristicId(),
-      "value":descriptor.getValue(),
+      "id": this.getId(),
+      "uuid": this.getUuid(),
+      "deviceID": this.getDeviceId(),
+      "serviceID": this.getServiceId(),
+      "serviceUUID": this.getServiceUuid(),
+      "characteristicUUID": this.getCharacteristicUuid(),
+      "characteristicID": this.getCharacteristicId(),
+      "value": arrayBufferToBase64(this.value),
     };
   }
 }
