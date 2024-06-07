@@ -9,7 +9,8 @@ export interface Resolve<T> {
 }
 
 // 失败回调函数
-export type Reject = (code?: number, message?: string, error?: BusinessError) => void;
+// export type Reject = (code?: number, message?: string, error?: BusinessError) => void;
+export type Reject = (code?: number, message?: string) => void;
 
 // 字符串转ArrayBuffer
 export function stringToArrayBuffer(string) {

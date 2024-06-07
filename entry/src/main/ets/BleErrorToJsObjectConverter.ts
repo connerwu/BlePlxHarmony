@@ -8,7 +8,7 @@ export class BleErrorToJsObjectConverter {
     return result;
   }
 
-  public toJs(error: BleError): object {
+  public toJs(error: BleError): string {
     const obj: any = {};
 
     obj["errorCode"] = error.errorCode.code;
@@ -25,7 +25,7 @@ export class BleErrorToJsObjectConverter {
     this.appendString(obj, "characteristicUUID", error.characteristicUUID);
     this.appendString(obj, "descriptorUUID", error.descriptorUUID);
     this.appendString(obj, "internalMessage", error.internalMessage);
-
+    let a = {}
     return obj;
   }
 

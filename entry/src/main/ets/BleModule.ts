@@ -12,6 +12,7 @@ import { Characteristic } from './Characteristic';
 import { Descriptor } from './Descriptor';
 import { ServiceFactory } from './utils/ServiceFactory';
 import { Device } from './Device';
+import { BleError,BleErrorCode } from './errors/BleError';
 
 export class BleClientManager {
   // 连接的设备
@@ -45,7 +46,8 @@ export class BleClientManager {
       access.enableBluetooth();
       resolve(null);
     } catch (e) {
-      reject();
+      let bleError = new BleError(BleErrorCode.BluetoothUnsupported,e.message);
+      reject(e.code, this.errorConverter.toJs(bleError));
     }
   }
 
@@ -54,7 +56,9 @@ export class BleClientManager {
       access.disableBluetooth();
       resolve(null);
     } catch (e) {
-      reject();
+      let bleError = new BleError(BleErrorCode.BluetoothPoweredOff,e.message);
+
+      reject(e.code, this.errorConverter.toJs(bleError));
     }
 
   }
@@ -146,7 +150,9 @@ export class BleClientManager {
                                             reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier;
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -162,7 +168,9 @@ export class BleClientManager {
                            reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -172,7 +180,9 @@ export class BleClientManager {
       if (err == null) {
         resolve(data);
       } else {
-        reject(err.code, err.message, err);
+        let bleError = new BleError(BleErrorCode.DeviceRSSIReadFailed,err.message,null);
+        bleError.deviceID = deviceIdentifier
+        reject(err.code, this.errorConverter.toJs(bleError));
       }
     })
   }
@@ -187,7 +197,9 @@ export class BleClientManager {
                              reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -220,11 +232,15 @@ export class BleClientManager {
         device.connect();
       }).catch(err => {
         Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-        reject((err as BusinessError).code, (err as BusinessError).message, err);
+        let bleError = new BleError(BleErrorCode.DeviceConnectionFailed,err.message,null);
+        bleError.deviceID = deviceIdentifier
+        reject(err.code, this.errorConverter.toJs(bleError));
       })
     } catch (err) {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      reject(err.code, this.errorConverter.toJs(bleError));
     }
   }
 
@@ -234,7 +250,9 @@ export class BleClientManager {
   public cancelDeviceConnection(deviceIdentifier: string, resolve: Resolve<ble.GattClientDevice>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -243,7 +261,9 @@ export class BleClientManager {
       resolve(device.clientDevice);
     } catch (err) {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.DeviceNotConnected,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      reject(err.code, this.errorConverter.toJs(bleError));
     }
   }
 
@@ -251,12 +271,22 @@ export class BleClientManager {
    * @description 设备是否已连接
    */
   public isDeviceConnected(deviceIdentifier: string, resolve: Resolve<boolean>, reject: Reject) {
-    let device = this.connectedDevices.get(deviceIdentifier);
-    if (device) {
-      resolve(true);
-    } else {
-      resolve(false);
+    try {
+      let device = this.connectedDevices.get(deviceIdentifier);
+
+      if (device) {
+        resolve(true);
+      } else {
+        let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not founded.',null);
+        bleError.deviceID = deviceIdentifier
+        reject(-1, this.errorConverter.toJs(bleError));
+      }
+    } catch (e) {
+      let bleError = new BleError(BleErrorCode.DeviceNotConnected,e.message,null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
     }
+
   }
 
   // Mark: Discovery -----------------------------------------------------------------------------------------------------
@@ -270,7 +300,9 @@ export class BleClientManager {
                                                         reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -302,7 +334,9 @@ export class BleClientManager {
       resolve(device);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.ServicesDiscoveryFailed,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -314,7 +348,9 @@ export class BleClientManager {
   public servicesForDevice(deviceIdentifier: string, resolve: Resolve<Array<Service>>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -332,7 +368,10 @@ export class BleClientManager {
                                   reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -351,19 +390,31 @@ export class BleClientManager {
                               reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let service = device.getServiceByUUID(serviceUUID);
     if (service == null) {
-      reject(-1, 'The service does not exist.');
+      let bleError = new BleError(BleErrorCode.ServiceNotFound,'The service does not exist..',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let characteristic = service.getCharacteristicByUUID(characteristicUUID)
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -380,13 +431,19 @@ export class BleClientManager {
                                reject: Reject) {
     let service = this.discoveredServices.get(serviceIdentifier);
     if (service == null) {
-      reject(-1, 'The service does not exist.');
+      let bleError = new BleError(BleErrorCode.ServiceNotFound,'The service does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let characteristic = service.getCharacteristicByUUID(characteristicUUID);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -402,7 +459,9 @@ export class BleClientManager {
                                       reject: Reject) {
     let characteristic = this.discoveredCharacteristics.get(characteristicIdentifier);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -421,13 +480,21 @@ export class BleClientManager {
                                      reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let characteristic = this.getCharacteristicOrEmitErrorWithDeviceId(deviceIdentifier, serviceUUID, characteristicUUID);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -438,7 +505,11 @@ export class BleClientManager {
       resolve(newChar);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.CharacteristicReadFailed,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -452,7 +523,10 @@ export class BleClientManager {
                                       reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithServiceId(serviceIdentifier, characteristicUUID);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -468,7 +542,9 @@ export class BleClientManager {
                             reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithCharId(characteristicIdentifier)
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -490,13 +566,21 @@ export class BleClientManager {
                                       reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let characteristic = this.getCharacteristicOrEmitErrorWithDeviceId(deviceIdentifier, serviceUUID, characteristicUUID);
     if (!characteristic) {
-      reject(-1, 'Characteristics does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -510,7 +594,11 @@ export class BleClientManager {
       resolve(newChar);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.CharacteristicWriteFailed,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -526,7 +614,10 @@ export class BleClientManager {
                                        reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithServiceId(serviceIdentifier, characteristicUUID);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -544,7 +635,9 @@ export class BleClientManager {
                              reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithCharId(characteristicIdentifier)
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -562,13 +655,21 @@ export class BleClientManager {
                                         reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let characteristic = this.getCharacteristicOrEmitErrorWithDeviceId(deviceIdentifier, serviceUUID, characteristicUUID);
     if (!characteristic) {
-      reject(-1, 'Characteristics does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -577,7 +678,11 @@ export class BleClientManager {
     }).catch(err => {
       Logger.debug(JSON.stringify(err));
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.CharacteristicNotifyChangeFailed,err.message,null);
+      bleError.deviceID = deviceIdentifier
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -591,7 +696,10 @@ export class BleClientManager {
                                          reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithServiceId(serviceIdentifier, characteristicUUID);
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -607,7 +715,9 @@ export class BleClientManager {
                                reject: Reject) {
     let characteristic = this.getCharacteristicOrEmitErrorWithCharId(characteristicIdentifier)
     if (characteristic == null) {
-      reject(-1, 'The characteristic does not exist.');
+      let bleError = new BleError(BleErrorCode.CharacteristicNotFound,'The characteristic does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -628,13 +738,23 @@ export class BleClientManager {
                                  reject: Reject) {
     let device = this.connectedDevices.get(deviceId);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let descriptor = this.getDescriptorWithDeviceId(deviceId, serviceUUID, characteristicUUID, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -645,7 +765,12 @@ export class BleClientManager {
       resolve(newDes);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.DescriptorReadFailed,err.message,null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -655,7 +780,11 @@ export class BleClientManager {
   public readDescriptorForService(serviceIdentifier: number, characteristicUUID: string, descriptorUUID: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.getDescriptorWithServiceId(serviceIdentifier, characteristicUUID, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -669,7 +798,10 @@ export class BleClientManager {
   public readDescriptorForCharacteristic(characteristicIdentifier: number, descriptorUUID: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.getDescriptorWithCharId(characteristicIdentifier, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -682,7 +814,9 @@ export class BleClientManager {
   public readDescriptor(descriptorIdentifier: number, descriptorUUID: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.discoveredDescriptors.get(descriptorIdentifier);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -695,13 +829,23 @@ export class BleClientManager {
   public writeDescriptorForDevice(deviceId: string, serviceUUID: string, characteristicUUID: string, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let device = this.connectedDevices.get(deviceId);
     if (!device) {
-      reject(-1, 'The device is not connected.');
+      let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
     let descriptor = this.getDescriptorWithDeviceId(deviceId, serviceUUID, characteristicUUID, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -714,7 +858,12 @@ export class BleClientManager {
       resolve(newDesc);
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
-      reject((err as BusinessError).code, (err as BusinessError).message, err);
+      let bleError = new BleError(BleErrorCode.DescriptorWriteFailed,err.message,null);
+      bleError.deviceID = deviceId
+      bleError.serviceUUID = serviceUUID
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
 
@@ -724,7 +873,11 @@ export class BleClientManager {
   public writeDescriptorForService(serviceIdentifier: number, characteristicUUID: string, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.getDescriptorWithServiceId(serviceIdentifier, characteristicUUID, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.serviceUUID = serviceIdentifier.toString()
+      bleError.characteristicUUID = characteristicUUID
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -737,7 +890,10 @@ export class BleClientManager {
   public writeDescriptorForCharacteristic(characteristicIdentifier: number, descriptorUUID: string, valueBase64: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.getDescriptorWithCharId(characteristicIdentifier, descriptorUUID);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.characteristicUUID = characteristicIdentifier.toString()
+      bleError.descriptorUUID = descriptorUUID
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
@@ -751,7 +907,9 @@ export class BleClientManager {
   public writeDescriptor(descriptorIdentifier: number, valueBase64: string, transactionId: string, resolve: Resolve<Descriptor>, reject: Reject) {
     let descriptor = this.discoveredDescriptors.get(descriptorIdentifier);
     if (descriptor == null) {
-      reject(-1, 'The descriptor does not exist.');
+      let bleError = new BleError(BleErrorCode.DescriptorNotFound,'The descriptor does not exist.',null);
+      bleError.descriptorUUID = descriptorIdentifier.toString()
+      reject(-1, this.errorConverter.toJs(bleError));
       return;
     }
 
