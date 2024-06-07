@@ -1,7 +1,6 @@
 import ble from '@ohos.bluetooth.ble';
 import access from '@ohos.bluetooth.access';
 import { BusinessError } from '@ohos.base';
-import { ValueType } from '@kit.ArkData';
 import Logger from './Logger'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
 import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
