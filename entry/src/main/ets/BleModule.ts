@@ -1,10 +1,13 @@
 import ble from '@ohos.bluetooth.ble';
-import Logger from './Logger'
+import access from '@ohos.bluetooth.access';
 import { BusinessError } from '@ohos.base';
+import { ValueType } from '@kit.ArkData';
+import Logger from './Logger'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
 import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
 import { constant } from '@kit.ConnectivityKit';
 import { JSON } from '@kit.ArkTS';
+import { BleErrorToJsObjectConverter } from './BleErrorToJsObjectConverter';
 import { Service } from './Service';
 import { Characteristic } from './Characteristic';
 import { Descriptor } from './Descriptor';
@@ -12,7 +15,6 @@ import { ServiceFactory } from './utils/ServiceFactory';
 import { Device } from './Device';
 
 export class BleClientManager {
-  
   // 连接的设备
   private connectedDevices: Map<string, Device> = new Map();
 
@@ -24,6 +26,56 @@ export class BleClientManager {
 
   // Descriptors
   private discoveredDescriptors: Map<number, Descriptor> = new Map();
+
+  private errorConverter:BleErrorToJsObjectConverter = new BleErrorToJsObjectConverter();
+
+  public createClient(restoreStateIdentifier: string): void {
+    try {
+      let bleClient = ble
+    } catch (e) {
+
+    }
+  }
+
+  public destroyClient():void {
+
+  }
+
+  public enable (transactionId:string,resolve: Resolve<Object>, reject: Reject):void {
+    try {
+      access.enableBluetooth();
+      resolve(null);
+    } catch (e) {
+      reject();
+    }
+  }
+
+  public disable (transactionId:string,resolve: Resolve<Object>, reject: Reject):void {
+    try {
+      access.disableBluetooth();
+      resolve(null);
+    } catch (e) {
+      reject();
+    }
+
+  }
+
+  public setLogLevel(logLevel:string):void{
+
+  }
+
+  public logLevel(resolve: Resolve<Object>, reject: Reject): void {
+
+  }
+
+  public cancelTransaction(transactionId:string): void {
+
+  }
+
+  public state(resolve: Resolve<Object>): void {
+    resolve(access.getState())
+  }
+
 
   // Mark: Scanning ------------------------------------------------------------------------------------------------------
 
