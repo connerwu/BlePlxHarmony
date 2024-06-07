@@ -38,7 +38,7 @@ export class Characteristic {
     return new Characteristic(id, service.getDeviceID(), service.getId(), service.getUuid(), gattCharacteristic);
   }
 
-  static constructorWithChar(other: Characteristic): Characteristic {
+  static constructorWithOther(other: Characteristic): Characteristic {
     return new Characteristic(other.id, other.deviceID, other.serviceID, other.serviceUUID, other.gattCharacteristic);
   }
 
