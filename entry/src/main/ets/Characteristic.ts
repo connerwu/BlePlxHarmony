@@ -1,6 +1,6 @@
 import ble from '@ohos.bluetooth.ble';
 import { Service } from './Service';
-import { BleUtils } from './BleUtils'
+import { arrayBufferToBase64, BleUtils } from './BleUtils'
 import { Descriptor } from './Descriptor'
 import { IdGenerator } from './utils/IdGenerator';
 import { IdGeneratorKey } from './utils/IdGeneratorKey';
@@ -139,20 +139,20 @@ export class Characteristic {
     Logger.debug(message);
   }
 
-  public toJSObject(characteristic:Characteristic):Object{
+  public asJSObject(): ValuesBucket {
     return {
-      "id":characteristic.getId(),
-      "uuid":characteristic.getUuid(),
-      "deviceID":characteristic.getDeviceId(),
-      "serviceID":characteristic.getServiceID(),
-      "serviceUUID":characteristic.getServiceUUID(),
-      "isReadable":characteristic.isReadable(),
-      "isWritableWithResponse":characteristic.isWritableWithResponse(),
-      "isWritableWithoutResponse":characteristic.isWritableWithoutResponse(),
-      "isNotifiable":characteristic.isNotifiable(),
-      "isNotifying":characteristic.isNotifying(),
-      "isIndicatable":characteristic.isIndicatable(),
-      "value":characteristic.getValue(),
+      "id": this.getId(),
+      "uuid": this.getUuid(),
+      "deviceID": this.getDeviceId(),
+      "serviceID": this.getServiceID(),
+      "serviceUUID": this.getServiceUUID(),
+      "isReadable": this.isReadable(),
+      "isWritableWithResponse": this.isWritableWithResponse(),
+      "isWritableWithoutResponse": this.isWritableWithoutResponse(),
+      "isNotifiable": this.isNotifiable(),
+      "isNotifying": this.isNotifying(),
+      "isIndicatable": this.isIndicatable(),
+      "value": arrayBufferToBase64(this.value),
     };
   }
 }
