@@ -13,6 +13,8 @@ import { Descriptor } from './Descriptor';
 import { ServiceFactory } from './utils/ServiceFactory';
 import { Device } from './Device';
 import { BleError,BleErrorCode } from './errors/BleError';
+import { BleEvent } from './BleEvent';
+
 // import { RNInstance } from '../../../RNOH/ts';
 
 export class BleClientManager {
@@ -28,16 +30,21 @@ export class BleClientManager {
   // Descriptors
   private discoveredDescriptors: Map<number, Descriptor> = new Map();
 
+  private discoveredDevices: Map<string, ValuesBucket> = new Map();
+
   private errorConverter:BleErrorToJsObjectConverter = new BleErrorToJsObjectConverter();
+
+  private logLevel: string;
 
   public invalidate() {
     this.connectedDevices.clear();
     this.discoveredServices.clear();
     this.discoveredCharacteristics.clear();
     this.discoveredDescriptors.clear();
+    this.discoveredDevices.clear();
   }
 
-  public dispatchEvent(name: string, value: ValuesBucket) {
+  public dispatchEvent(name: string, value: any) {
     Logger.debug('Event name: ' + name, ', value: ' + JSON.stringify(value));
     // TODO: RN Event
     // this.sendEvent(name, value);
@@ -84,19 +91,6 @@ export class BleClientManager {
     resolve(result)
   }
 
-  public setLogLevel(logLevel:string):void{
-
-  }
-
-  public logLevel(resolve: Resolve<Object>, reject: Reject): void {
-
-  }
-
-  public cancelTransaction(transactionId:string): void {
-
-  }
-
-
   // Mark: Scanning ------------------------------------------------------------------------------------------------------
 
   /**
@@ -111,7 +105,9 @@ export class BleClientManager {
     try {
       ble.on("BLEDeviceFind", (data: Array<ble.ScanResult>) => {
         Logger.debug('BLE scan device find result = ' + JSON.stringify(data));
-        let result = scanResultToJsObjectConverter(data[0]);
+        let device = data[0];
+        let result = scanResultToJsObjectConverter(device);
+        this.discoveredDevices.set(device.deviceId, result);
         resolve?.(result);
       });
 
@@ -146,6 +142,8 @@ export class BleClientManager {
         ble.startBLEScan(filters);
       }
     } catch (err) {
+      let bleError = new BleError(BleErrorCode.ScanStartFailed, 'Scan start failed.', null);
+      reject(-1, this.errorConverter.toJs(bleError));
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
     }
   }
@@ -167,7 +165,7 @@ export class BleClientManager {
   public requestConnectionPriorityForDevice(deviceIdentifier: string,
                                             connectionPriority: number,
                                             transactionId: string,
-                                            resolve: Resolve<Device>,
+                                            resolve: Resolve<ValuesBucket>,
                                             reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
@@ -177,7 +175,7 @@ export class BleClientManager {
       return;
     }
 
-    resolve(device);
+    resolve(device.asJSObject());
   }
 
   /**
@@ -196,8 +194,6 @@ export class BleClientManager {
     }
 
     device.clientDevice.getRssiValue((err: BusinessError, data: number) => {
-      console.info('rssi err ' + JSON.stringify(err));
-      console.info('rssi value' + JSON.stringify(data));
       if (err == null) {
         resolve(data);
       } else {
@@ -214,7 +210,7 @@ export class BleClientManager {
   public requestMTUForDevice(deviceIdentifier: string,
                              mtu: number,
                              transactionId: string,
-                             resolve: Resolve<Device>,
+                             resolve: Resolve<ValuesBucket>,
                              reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
@@ -224,31 +220,60 @@ export class BleClientManager {
       return;
     }
 
-    resolve(device);
+    resolve(device.asJSObject());
   }
 
   // Mark: Connection Management ------------------------------------------------------------------------------------------------------
+
+  public devices(deviceIdentifiers: Array<string>,
+                 resolve: Resolve<Array<ValuesBucket>>,
+                 reject: Reject) {
+    var list = Array<ValuesBucket>();
+    deviceIdentifiers.forEach(deviceId => {
+      this.discoveredDevices.forEach((value, key) => {
+        if (key == deviceId) {
+          list.push(value);
+        }
+      })
+    })
+    resolve(list);
+  }
+
+  public getConnectedDevices(deviceIdentifiers: Array<string>,
+                 resolve: Resolve<Array<ValuesBucket>>,
+                 reject: Reject) {
+    var list = Array<ValuesBucket>();
+    deviceIdentifiers.forEach(deviceId => {
+      this.connectedDevices.forEach((value, key) => {
+        if (key == deviceId) {
+          list.push(value.asJSObject());
+        }
+      })
+    })
+    resolve(list);
+  }
 
   /**
    * @description client端发起连接远端蓝牙低功耗设备
    */
   public connectToDevice(deviceIdentifier: string,
                          options: Map<string, ValueType>,
-                         resolve: Resolve<constant.ProfileConnectionState>,
+                         resolve: Resolve<ValuesBucket>,
                          reject: Reject) {
     try {
       let device: ble.GattClientDevice = ble.createGattClientDevice(deviceIdentifier);
       device.getDeviceName().then(value => {
         device.on('BLEConnectionStateChange', (state: ble.BLEConnectionChangeState) => {
           Logger.debug('bluetooth connect state changed: ' + state.state);
+          let client = new Device(deviceIdentifier, value)
+          client.clientDevice = device;
           if (state.state == constant.ProfileConnectionState.STATE_CONNECTED) {
-            let client = new Device(deviceIdentifier, value)
-            client.clientDevice = device;
             this.connectedDevices.set(deviceIdentifier, client);
+            resolve(client.asJSObject());
           } else {
             this.connectedDevices.delete(deviceIdentifier);
+            this.dispatchEvent(BleEvent.disconnectionEvent, [null, client.asJSObject()]);
           }
-          resolve(state.state);
         });
         device.connect();
       }).catch(err => {
@@ -268,7 +293,7 @@ export class BleClientManager {
   /**
    * @description client端断开与远端蓝牙低功耗设备的连接
    */
-  public cancelDeviceConnection(deviceIdentifier: string, resolve: Resolve<ble.GattClientDevice>, reject: Reject) {
+  public cancelDeviceConnection(deviceIdentifier: string, resolve: Resolve<ValuesBucket>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
       let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
@@ -279,7 +304,7 @@ export class BleClientManager {
 
     try {
       device.clientDevice.disconnect();
-      resolve(device.clientDevice);
+      resolve(device.asJSObject());
     } catch (err) {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
       let bleError = new BleError(BleErrorCode.DeviceNotConnected,err.message,null);
@@ -317,7 +342,7 @@ export class BleClientManager {
    */
   public discoverAllServicesAndCharacteristicsForDevice(deviceIdentifier: string,
                                                         transactionId: string,
-                                                        resolve: Resolve<Device>,
+                                                        resolve: Resolve<ValuesBucket>,
                                                         reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
@@ -352,7 +377,7 @@ export class BleClientManager {
         })
       })
       device.setServices(newServiceList);
-      resolve(device);
+      resolve(device.asJSObject());
     }).catch(err => {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
       let bleError = new BleError(BleErrorCode.ServicesDiscoveryFailed,err.message,null);
@@ -984,6 +1009,18 @@ export class BleClientManager {
     }
 
     this.writeDescriptorForDevice(descriptor.getDeviceId(), descriptor.getServiceUuid(), descriptor.getCharacteristicUuid(), descriptor.getUuid(), valueBase64, transactionId, resolve, reject);
+  }
+
+  public cancelTransaction(transactionId: string) {
+    Logger.debug('cancelTransaction: '+ transactionId);
+  }
+
+  public setLogLevel(logLevel: string) {
+    this.logLevel = logLevel;
+  }
+
+  public getLogLevel(resolve: Resolve<string>, reject: Reject) {
+    resolve(this.logLevel);
   }
 
   public addListener(eventName: string) {

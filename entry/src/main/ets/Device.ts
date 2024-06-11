@@ -1,5 +1,6 @@
 import { Service } from './Service'
 import { ble } from '@kit.ConnectivityKit';
+import { ValuesBucket } from '@kit.ArkData';
 
 export class Device {
   private id: string;
@@ -9,6 +10,8 @@ export class Device {
   private services: Service[];
 
   public clientDevice: ble.GattClientDevice;
+
+  public mut: number = 23;
 
   constructor(id: string, name: string) {
     this.id = id;
@@ -50,5 +53,22 @@ export class Device {
       }
     });
     return null;
+  }
+
+  public asJSObject(rssi?: number): ValuesBucket {
+    return {
+      'id': this.getId(),
+      'name': this.getName(),
+      'rssi': rssi,
+      'mut': this.mut,
+      'manufacturerData': null,
+      'serviceData': null,
+      'serviceUUIDs': null,
+      'localName': null,
+      'txPowerLevel': null,
+      'solicitedServiceUUIDs': null,
+      'isConnectable': null,
+      'overflowServiceUUIDs': null
+    }
   }
 }
