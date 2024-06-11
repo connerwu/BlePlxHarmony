@@ -11,7 +11,7 @@ export class BleErrorToJsObjectConverter {
   public toJs(error: BleError): string {
     const obj: any = {};
 
-    obj["errorCode"] = error.errorCode.code;
+    obj["errorCode"] = error.errorCode;
 
     obj["attErrorCode"] = error.androidCode != null && error.androidCode >= 0 && error.androidCode < 0x80 ? error.androidCode : null;
 

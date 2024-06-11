@@ -59,15 +59,13 @@ struct Index {
     // })
 
     // 扫描
-    this.manager.startDeviceScan(null, null, (deviceList: Array<ble.ScanResult>) => {
-      deviceList.forEach(item => {
-        Logger.debug('发现设备：'+ item['deviceName']);
-        if (item['deviceName'] == 'iGS620') {
+    this.manager.startDeviceScan(null, null, (device => {
+      Logger.debug('发现设备：'+ device!['name']);
+        if (device!['name'] == 'iGS620') {
           this.manager.stopDeviceScan();
-          this.connectToDevice(item['deviceId']);
+          this.connectToDevice(device!['id'] as string);
         }
-      })
-    });
+    }), null);
   }
 
   // 连接

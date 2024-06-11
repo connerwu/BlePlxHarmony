@@ -3,7 +3,7 @@ import access from '@ohos.bluetooth.access';
 import { BusinessError } from '@ohos.base';
 import Logger from './Logger'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
-import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
+import { Resolve, Reject, stringToArrayBuffer, scanResultToJsObjectConverter } from './BleUtils'
 import { constant } from '@kit.ConnectivityKit';
 import { JSON } from '@kit.ArkTS';
 import { BleErrorToJsObjectConverter } from './BleErrorToJsObjectConverter';
@@ -13,6 +13,7 @@ import { Descriptor } from './Descriptor';
 import { ServiceFactory } from './utils/ServiceFactory';
 import { Device } from './Device';
 import { BleError,BleErrorCode } from './errors/BleError';
+// import { RNInstance } from '../../../RNOH/ts';
 
 export class BleClientManager {
   // 连接的设备
@@ -29,19 +30,20 @@ export class BleClientManager {
 
   private errorConverter:BleErrorToJsObjectConverter = new BleErrorToJsObjectConverter();
 
-  public createClient(restoreStateIdentifier: string): void {
-    try {
-      let bleClient = ble
-    } catch (e) {
-
-    }
+  public invalidate() {
+    this.connectedDevices.clear();
+    this.discoveredServices.clear();
+    this.discoveredCharacteristics.clear();
+    this.discoveredDescriptors.clear();
   }
 
-  public destroyClient():void {
-
+  public dispatchEvent(name: string, value: ValuesBucket) {
+    Logger.debug('Event name: ' + name, ', value: ' + JSON.stringify(value));
+    // TODO: RN Event
+    // this.sendEvent(name, value);
   }
 
-  public enable (transactionId:string,resolve: Resolve<Object>, reject: Reject):void {
+  public enable(transactionId: string, resolve: Resolve<Object>, reject: Reject) {
     try {
       access.enableBluetooth();
       resolve(null);
@@ -51,16 +53,35 @@ export class BleClientManager {
     }
   }
 
-  public disable (transactionId:string,resolve: Resolve<Object>, reject: Reject):void {
+  public disable(transactionId: string, resolve: Resolve<Object>, reject: Reject) {
     try {
       access.disableBluetooth();
       resolve(null);
     } catch (e) {
       let bleError = new BleError(BleErrorCode.BluetoothPoweredOff,e.message);
-
       reject(e.code, this.errorConverter.toJs(bleError));
     }
+  }
 
+  public state(resolve: Resolve<Object>, reject: Reject) {
+    var result: string = 'Unknown';
+    let state = access.getState();
+    switch (state) {
+      case access.BluetoothState.STATE_OFF:
+        result = 'PoweredOff';
+        break;
+      case access.BluetoothState.STATE_ON:
+      case access.BluetoothState.STATE_BLE_ON:
+        result = 'PoweredOn';
+        break;
+      case access.BluetoothState.STATE_TURNING_ON:
+      case access.BluetoothState.STATE_TURNING_OFF:
+      case access.BluetoothState.STATE_BLE_TURNING_ON:
+      case access.BluetoothState.STATE_BLE_TURNING_OFF:
+        result = 'Resetting';
+        break;
+    }
+    resolve(result)
   }
 
   public setLogLevel(logLevel:string):void{
@@ -75,10 +96,6 @@ export class BleClientManager {
 
   }
 
-  public state(resolve: Resolve<Object>): void {
-    resolve(access.getState())
-  }
-
 
   // Mark: Scanning ------------------------------------------------------------------------------------------------------
 
@@ -87,11 +104,15 @@ export class BleClientManager {
    * @param filteredUUIDs: Array<string>
    * @param options: Map<string, number>
    */
-  public startDeviceScan(filteredUUIDs?: Array<string>, options?: Map<string, number>, callback?: Function) {
+  public startDeviceScan(filteredUUIDs?: Array<string>,
+                         options?: Map<string, number>,
+                         resolve?: Resolve<ValuesBucket>,
+                         reject?: Reject) {
     try {
       ble.on("BLEDeviceFind", (data: Array<ble.ScanResult>) => {
         Logger.debug('BLE scan device find result = ' + JSON.stringify(data));
-        callback?.(data);
+        let result = scanResultToJsObjectConverter(data[0]);
+        resolve?.(result);
       });
 
       ///表示扫描结果过滤策略集合，如果不使用过滤的方式，该参数设置为null。

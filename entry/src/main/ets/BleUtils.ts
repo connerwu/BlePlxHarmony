@@ -1,8 +1,8 @@
-import { BusinessError } from '@ohos.base';
-
-// export type Resolve = (value?: any) => void;
-
 // 成功回调函数
+import { ValuesBucket, ValueType } from '@kit.ArkData';
+import { ble } from '@kit.ConnectivityKit';
+import Logger from './Logger';
+
 export interface Resolve<T> {
   (data?: T): void;
 }
@@ -61,6 +61,16 @@ export function arrayBufferToBase64(arrayBuffer: ArrayBuffer): string {
     base64 += encodings[a] + encodings[b] + encodings[c] + '='
   }
   return base64
+}
+
+export function scanResultToJsObjectConverter(scanResult: ble.ScanResult): ValuesBucket {
+  Logger.debug('000000' + arrayBufferToBase64(scanResult.data));
+  return {
+    'id': scanResult.deviceId,
+    'name': scanResult.deviceName,
+    'rssi': scanResult.rssi,
+    'isConnectable': scanResult.connectable,
+  }
 }
 
 export class BleUtils {

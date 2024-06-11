@@ -1,6 +1,6 @@
 import ble from '@ohos.bluetooth.ble';
 import { Characteristic } from './Characteristic';
-import { ValuesBucket, ValueType } from '@kit.ArkData';
+import { ValuesBucket } from '@kit.ArkData';
 
 export class Service {
 
