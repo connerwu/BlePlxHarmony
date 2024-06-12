@@ -14,10 +14,15 @@ import { ServiceFactory } from './common/ServiceFactory';
 import { BleDevice } from './BleDevice';
 import { BleError,BleErrorCode } from './common/BleError';
 import { BleEvent } from './common/BleEvent';
-
-// import { RNInstance } from '../../../RNOH/ts';
+import { BlePlxInterface } from './BlePlxInterface'
 
 export class BleClientManager {
+  // restoreIdentifierKey
+  private restoreIdentifierKey: string;
+
+  // 代理
+  public delegate: BlePlxInterface | undefined;
+
   // 连接的设备
   private connectedDevices: Map<string, BleDevice> = new Map();
 
@@ -30,11 +35,20 @@ export class BleClientManager {
   // Descriptors
   private discoveredDescriptors: Map<number, Descriptor> = new Map();
 
+  // Devices
   private discoveredDevices: Map<string, ValuesBucket> = new Map();
 
   private errorConverter:BleErrorToJsObjectConverter = new BleErrorToJsObjectConverter();
 
   private logLevel: string;
+
+  constructor(restoreIdentifierKey: string) {
+    this.restoreIdentifierKey = restoreIdentifierKey;
+
+    access.on("stateChange", (state => {
+      this.onStateChange(state);
+    }))
+  }
 
   public invalidate() {
     this.connectedDevices.clear();
@@ -44,10 +58,8 @@ export class BleClientManager {
     this.discoveredDevices.clear();
   }
 
-  public dispatchEvent(name: string, value: any) {
-    Logger.debug('Event name: ' + name, ', value: ' + JSON.stringify(value));
-    // TODO: RN Event
-    // this.sendEvent(name, value);
+  private dispatchEvent(name: string, value: any) {
+    this.delegate?.dispatchEvent(name, value);
   }
 
   public enable(transactionId: string, resolve: Resolve<Object>, reject: Reject) {
@@ -55,7 +67,7 @@ export class BleClientManager {
       access.enableBluetooth();
       resolve(null);
     } catch (e) {
-      let bleError = new BleError(BleErrorCode.BluetoothUnsupported,e.message);
+      let bleError = new BleError(BleErrorCode.BluetoothStateChangeFailed,e.message);
       reject(e.code, this.errorConverter.toJs(bleError));
     }
   }
@@ -65,7 +77,7 @@ export class BleClientManager {
       access.disableBluetooth();
       resolve(null);
     } catch (e) {
-      let bleError = new BleError(BleErrorCode.BluetoothPoweredOff,e.message);
+      let bleError = new BleError(BleErrorCode.BluetoothStateChangeFailed,e.message);
       reject(e.code, this.errorConverter.toJs(bleError));
     }
   }
@@ -98,11 +110,9 @@ export class BleClientManager {
    * @param filteredUUIDs: Array<string>
    * @param options: Map<string, number>
    */
-  public startDeviceScan(filteredUUIDs?: Array<string>,
-                         options?: Map<string, number>,
-                         resolve?: Resolve<ValuesBucket>,
-                         reject?: Reject) {
+  public startDeviceScan(filteredUUIDs?: Array<string>, options?: Map<string, number>, resolve?: Resolve<ValuesBucket>, reject?: Reject) {
     try {
+      // 监听发现的设备
       ble.on("BLEDeviceFind", (data: Array<ble.ScanResult>) => {
         Logger.debug('BLE scan device find result = ' + JSON.stringify(data));
         let device = data[0];
@@ -143,7 +153,7 @@ export class BleClientManager {
       }
     } catch (err) {
       let bleError = new BleError(BleErrorCode.ScanStartFailed, 'Scan start failed.', null);
-      reject(-1, this.errorConverter.toJs(bleError));
+      reject(null, this.errorConverter.toJs(bleError));
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
     }
   }
@@ -153,6 +163,7 @@ export class BleClientManager {
    */
   public stopDeviceScan() {
     try {
+      ble.off("BLEDeviceFind");
       ble.stopBLEScan();
     } catch (err) {
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
@@ -162,11 +173,7 @@ export class BleClientManager {
   /**
    * @description Request a connection parameter update. This functions may update connection parameters on Android API level 21 or above.
    */
-  public requestConnectionPriorityForDevice(deviceIdentifier: string,
-                                            connectionPriority: number,
-                                            transactionId: string,
-                                            resolve: Resolve<ValuesBucket>,
-                                            reject: Reject) {
+  public requestConnectionPriorityForDevice(deviceIdentifier: string, connectionPriority: number, transactionId: string, resolve: Resolve<ValuesBucket>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
       let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
@@ -181,10 +188,7 @@ export class BleClientManager {
   /**
    * @description 读取RSSI
    */
-  public readRSSIForDevice(deviceIdentifier: string,
-                           transactionId: string,
-                           resolve: Resolve<number>,
-                           reject: Reject) {
+  public readRSSIForDevice(deviceIdentifier: string, transactionId: string, resolve: Resolve<ValuesBucket>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
       let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
@@ -195,7 +199,7 @@ export class BleClientManager {
 
     device.clientDevice.getRssiValue((err: BusinessError, data: number) => {
       if (err == null) {
-        resolve(data);
+        resolve(device.asJSObject(data));
       } else {
         let bleError = new BleError(BleErrorCode.DeviceRSSIReadFailed,err.message,null);
         bleError.deviceID = deviceIdentifier
@@ -207,11 +211,7 @@ export class BleClientManager {
   /**
    * @description 请求MTU
    */
-  public requestMTUForDevice(deviceIdentifier: string,
-                             mtu: number,
-                             transactionId: string,
-                             resolve: Resolve<ValuesBucket>,
-                             reject: Reject) {
+  public requestMTUForDevice(deviceIdentifier: string, mtu: number, transactionId: string, resolve: Resolve<ValuesBucket>, reject: Reject) {
     let device = this.connectedDevices.get(deviceIdentifier);
     if (!device) {
       let bleError = new BleError(BleErrorCode.DeviceNotFound,'The device is not connected.',null);
@@ -225,9 +225,7 @@ export class BleClientManager {
 
   // Mark: Connection Management ------------------------------------------------------------------------------------------------------
 
-  public devices(deviceIdentifiers: Array<string>,
-                 resolve: Resolve<Array<ValuesBucket>>,
-                 reject: Reject) {
+  public devices(deviceIdentifiers: Array<string>, resolve: Resolve<Array<ValuesBucket>>, reject: Reject) {
     var list = Array<ValuesBucket>();
     deviceIdentifiers.forEach(deviceId => {
       this.discoveredDevices.forEach((value, key) => {
@@ -239,9 +237,7 @@ export class BleClientManager {
     resolve(list);
   }
 
-  public getConnectedDevices(deviceIdentifiers: Array<string>,
-                 resolve: Resolve<Array<ValuesBucket>>,
-                 reject: Reject) {
+  public getConnectedDevices(deviceIdentifiers: Array<string>, resolve: Resolve<Array<ValuesBucket>>, reject: Reject) {
     var list = Array<ValuesBucket>();
     deviceIdentifiers.forEach(deviceId => {
       this.connectedDevices.forEach((value, key) => {
@@ -256,23 +252,35 @@ export class BleClientManager {
   /**
    * @description client端发起连接远端蓝牙低功耗设备
    */
-  public connectToDevice(deviceIdentifier: string,
-                         options: Map<string, ValueType>,
-                         resolve: Resolve<ValuesBucket>,
-                         reject: Reject) {
+  public connectToDevice(deviceIdentifier: string, options: Map<string, ValueType>, resolve: Resolve<ValuesBucket>, reject: Reject) {
     try {
       let device: ble.GattClientDevice = ble.createGattClientDevice(deviceIdentifier);
       device.getDeviceName().then(value => {
+        this.dispatchEvent(BleEvent.connectingEvent, deviceIdentifier);
+
         device.on('BLEConnectionStateChange', (state: ble.BLEConnectionChangeState) => {
+          // 监听蓝牙状态改变
+          device.on("BLEConnectionStateChange", (state => {
+            Logger.debug('蓝牙状态改变：' + state.toString());
+          }));
+
           Logger.debug('bluetooth connect state changed: ' + state.state);
           let client = new BleDevice(deviceIdentifier, value)
           client.clientDevice = device;
           if (state.state == constant.ProfileConnectionState.STATE_CONNECTED) {
+            this.dispatchEvent(BleEvent.connectedEvent, deviceIdentifier);
+
             this.connectedDevices.set(deviceIdentifier, client);
             resolve(client.asJSObject());
           } else {
+            if (state.state == constant.ProfileConnectionState.STATE_CONNECTING) {
+              this.dispatchEvent(BleEvent.connectingEvent, deviceIdentifier);
+            } else if (state.state == constant.ProfileConnectionState.STATE_DISCONNECTING) {
+              this.dispatchEvent(BleEvent.disconnectionEvent, deviceIdentifier);
+            } else if (state.state == constant.ProfileConnectionState.STATE_DISCONNECTED) {
+              this.dispatchEvent(BleEvent.disconnectionEvent, deviceIdentifier);
+            }
             this.connectedDevices.delete(deviceIdentifier);
-            this.dispatchEvent(BleEvent.disconnectionEvent, [null, client.asJSObject()]);
           }
         });
         device.connect();
@@ -737,14 +745,15 @@ export class BleClientManager {
     }
 
     device.clientDevice.setCharacteristicChangeNotification(characteristic.gattCharacteristic, true).then(value => {
+      this.dispatchEvent(BleEvent.readEvent, [null, characteristic.asJSObject()]);
       resolve(characteristic.asJSObject());
     }).catch(err => {
-      Logger.debug(JSON.stringify(err));
       Logger.debug('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
       let bleError = new BleError(BleErrorCode.CharacteristicNotifyChangeFailed,err.message,null);
       bleError.deviceID = deviceIdentifier
       bleError.serviceUUID = serviceUUID
       bleError.characteristicUUID = characteristicUUID
+      this.dispatchEvent(BleEvent.readEvent, [this.errorConverter.toJs(bleError), null, transactionId]);
       reject(err.code, this.errorConverter.toJs(bleError));
     });
   }
@@ -1023,17 +1032,13 @@ export class BleClientManager {
     resolve(this.logLevel);
   }
 
-  public addListener(eventName: string) {
-    // Keep: Required for RN built in Event Emitter Calls.
+  // Mark: Tools (Private) ------------------------------------------------------------------------------------
 
+  private onStateChange(state: access.BluetoothState) {
+    this.state((value => {
+      this.dispatchEvent(BleEvent.stateChangeEvent, value);
+    }), null);
   }
-
-  public removeListeners(count: number) {
-    // Keep: Required for RN built in Event Emitter Calls.
-
-  }
-
-  // Mark: Tools ------------------------------------------------------------------------------------
 
   private getCharacteristicOrEmitErrorWithCharId(characteristicIdentifier: number): Characteristic | null {
     let characteristic = this.discoveredCharacteristics.get(characteristicIdentifier);

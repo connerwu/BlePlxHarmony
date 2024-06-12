@@ -43,7 +43,7 @@ export const BleErrorCode={
 };
 export class BleError extends Error {
   public errorCode: number;
-  public androidCode?: number;
+  public harmonyCode?: number;
   public reason: string;
   public deviceID?: string;
   public serviceUUID?: string;
@@ -51,17 +51,17 @@ export class BleError extends Error {
   public descriptorUUID?: string;
   public internalMessage?: string;
 
-  constructor(errorCode: number, reason: string, androidCode?: number) {
-    super(`Error code: ${errorCode}, android code: ${androidCode}, reason: ${reason}`);
+  constructor(errorCode: number, reason: string, harmonyCode?: number) {
+    super(`Error code: ${errorCode}, harmony code: ${harmonyCode}, reason: ${reason}`);
     this.errorCode = errorCode;
     this.reason = reason;
-    this.androidCode = androidCode;
+    this.harmonyCode = harmonyCode;
   }
 
   // 注意：在TypeScript中，通常不直接重写getMessage方法，因为Error类的toString方法会自动调用它。
   // 但如果你想自定义错误信息的获取方式，可以这样做：
   getMessage(): string {
-    return `Error code: ${this.errorCode}, android code: ${this.androidCode}, reason: ${this.reason}, ` +
+    return `Error code: ${this.errorCode}, harmony code: ${this.harmonyCode}, reason: ${this.reason}, ` +
       `deviceId: ${this.deviceID}, serviceUuid: ${this.serviceUUID}, ` +
       `characteristicUuid: ${this.characteristicUUID}, descriptorUuid: ${this.descriptorUUID}, ` +
       `internalMessage: ${this.internalMessage}`;

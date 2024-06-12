@@ -3,5 +3,7 @@ export const BleEvent = {
   readEvent: 'ReadEvent',
   stateChangeEvent: 'StateChangeEvent',
   restoreStateEvent: 'RestoreStateEvent',
-  disconnectionEvent: 'DisconnectionEvent'
+  disconnectionEvent: 'DisconnectionEvent',
+  connectingEvent: 'ConnectingEvent',
+  connectedEvent: 'ConnectedEvent'
 }

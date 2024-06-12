@@ -1,14 +1,23 @@
+import Logger from './common/Logger'
 import { BleEvent } from './common/BleEvent';
 import { BleClientManager } from './BleModule'
-import { Resolve, Reject, stringToArrayBuffer } from './common/BleUtils'
+import { Resolve, Reject } from './common/BleUtils'
+import { BlePlxInterface } from './BlePlxInterface'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
-import { deviceControl } from '@kit.MDMKit';
+// import { RNInstance } from '../../../RNOH/ts';
 
-export class BlePlxModule {
+export class BlePlxModule implements BlePlxInterface {
   private manager: BleClientManager;
 
+  public dispatchEvent(name: string, value: any) {
+    Logger.debug('Event name: ' + name, ', value: ' + JSON.stringify(value));
+    // TODO: RN Event
+    // this.sendEvent(name, value);
+  }
+
   public createClient(restoreStateIdentifier: string) {
-    this.manager = new BleClientManager();
+    this.manager = new BleClientManager(restoreStateIdentifier);
+    this.manager.delegate = this;
   }
 
   public destroyClient() {
@@ -30,11 +39,16 @@ export class BlePlxModule {
     this.manager.state(resolve, reject);
   }
 
+  // 测试专用，发布时删除此方法
+  public startDeviceScanForDev(filteredUUIDs?: Array<string>, options?: Map<string, number>, resolve?: Resolve<ValuesBucket>, reject?: Reject) {
+    this.manager.startDeviceScan(filteredUUIDs, options, resolve, reject);
+  }
+
   public startDeviceScan(filteredUUIDs?: Array<string>, options?: Map<string, number>) {
     this.manager.startDeviceScan(filteredUUIDs, options, (data => {
-      this.manager.dispatchEvent(BleEvent.scanEvent, [null, data]);
+      this.dispatchEvent(BleEvent.scanEvent, [null, data]);
     }), (code, message) => {
-      this.manager.dispatchEvent(BleEvent.scanEvent, message);
+      this.dispatchEvent(BleEvent.scanEvent, message);
     });
   }
 
@@ -48,6 +62,10 @@ export class BlePlxModule {
                                             resolve: Resolve<ValuesBucket>,
                                             reject: Reject) {
     this.manager.requestConnectionPriorityForDevice(deviceIdentifier, connectionPriority, transactionId, resolve, reject);
+  }
+
+  public readRSSIForDevice(deviceIdentifier: string, transactionId: string, resolve: Resolve<ValuesBucket>, reject: Reject) {
+    this.manager.readRSSIForDevice(deviceIdentifier, transactionId, resolve, reject);
   }
 
   public requestMTUForDevice(deviceIdentifier: string,

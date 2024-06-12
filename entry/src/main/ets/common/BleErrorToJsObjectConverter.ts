@@ -13,11 +13,11 @@ export class BleErrorToJsObjectConverter {
 
     obj["errorCode"] = error.errorCode;
 
-    obj["attErrorCode"] = error.androidCode != null && error.androidCode >= 0 && error.androidCode < 0x80 ? error.androidCode : null;
+    obj["attErrorCode"] = error.harmonyCode != null && error.harmonyCode >= 0 && error.harmonyCode < 0x80 ? error.harmonyCode : null;
 
     obj["iosErrorCode"] = null;
 
-    obj["androidErrorCode"] = error.androidCode != null && error.androidCode >= 0x80 ? error.androidCode : null;
+    obj["harmonyErrorCode"] = error.harmonyCode != null && error.harmonyCode >= 0x80 ? error.harmonyCode : null;
 
     this.appendString(obj, "reason", error.reason);
     this.appendString(obj, "deviceID", error.deviceID);

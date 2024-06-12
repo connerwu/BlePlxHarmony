@@ -5,13 +5,14 @@ import { BleClientManager } from '../BleModule'
 import { constant } from '@kit.ConnectivityKit';
 import json from '@ohos.util.json';
 import { JSON } from '@kit.ArkTS';
+import { BlePlxModule } from '../BlePlxModule';
 
 @Entry
 @Component
 struct Index {
   @State message: string = 'Hello World';
 
-  manager: BleClientManager = new BleClientManager();
+  manager: BlePlxModule = new BlePlxModule();
 
   build() {
     Row() {
@@ -59,8 +60,10 @@ struct Index {
     //   Logger.debug('bluetooth statues: ' + btStateMessage);
     // })
 
+    this.manager.createClient('123');
+
     // 扫描
-    this.manager.startDeviceScan(null, null, (device => {
+    this.manager.startDeviceScanForDev(null, null, (device => {
       Logger.debug('发现设备：'+ device!['name']);
         if (device!['name'] == 'iGS620') {
           this.manager.stopDeviceScan();
