@@ -2,7 +2,7 @@ import { Service } from './Service'
 import { ble } from '@kit.ConnectivityKit';
 import { ValuesBucket } from '@kit.ArkData';
 
-export class Device {
+export class BleDevice {
   private id: string;
 
   private name: string;

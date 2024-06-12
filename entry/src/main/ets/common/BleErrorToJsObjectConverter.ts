@@ -1,4 +1,4 @@
-import { BleError } from './errors/BleError';
+import { BleError } from './BleError';
 
 export class BleErrorToJsObjectConverter {
   public toJSCallback(error: BleError): any[] {

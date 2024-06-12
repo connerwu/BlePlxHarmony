@@ -1,9 +1,10 @@
 import access from '@ohos.bluetooth.access';
 import ble from '@ohos.bluetooth.ble';
-import Logger from '../Logger'
+import Logger from '../common/Logger'
 import { BleClientManager } from '../BleModule'
 import { constant } from '@kit.ConnectivityKit';
 import json from '@ohos.util.json';
+import { JSON } from '@kit.ArkTS';
 
 @Entry
 @Component
@@ -71,13 +72,14 @@ struct Index {
   // 连接
   connectToDevice(deviceId: string) {
     this.manager.connectToDevice(deviceId, null, (value) => {
+      Logger.debug(JSON.stringify(value));
       Logger.debug('连接完成');
-      if (value == constant.ProfileConnectionState.STATE_CONNECTED) {
-        Logger.debug('连接成功');
-        this.testFunctionsAfterConnected(deviceId);
-      } else {
-        Logger.debug('连接状态:' + value);
-      }
+      // if (value == constant.ProfileConnectionState.STATE_CONNECTED) {
+      //   Logger.debug('连接成功');
+      //   this.testFunctionsAfterConnected(deviceId);
+      // } else {
+      //   Logger.debug('连接状态:' + value);
+      // }
     }, () => {
       Logger.debug('连接失败');
     })

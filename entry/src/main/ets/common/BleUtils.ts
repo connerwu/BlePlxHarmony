@@ -1,5 +1,5 @@
 // 成功回调函数
-import { ValuesBucket, ValueType } from '@kit.ArkData';
+import { ValuesBucket } from '@kit.ArkData';
 import { ble } from '@kit.ConnectivityKit';
 import Logger from './Logger';
 
@@ -8,7 +8,6 @@ export interface Resolve<T> {
 }
 
 // 失败回调函数
-// export type Reject = (code?: number, message?: string, error?: BusinessError) => void;
 export type Reject = (code?: number, message?: string) => void;
 
 // 字符串转ArrayBuffer
@@ -70,19 +69,5 @@ export function scanResultToJsObjectConverter(scanResult: ble.ScanResult): Value
     'name': scanResult.deviceName,
     'rssi': scanResult.rssi,
     'isConnectable': scanResult.connectable,
-  }
-}
-
-export class BleUtils {
-  static instanceMap: Map<string, number> = new Map();
-
-  // 根据uuid生成instantId
-  static getInstanceId(uuid: string): number {
-    let value = this.instanceMap.get(uuid);
-    if (value == null) {
-      value = new Date().getTime();
-      this.instanceMap.set(uuid, value);
-    }
-    return value;
   }
 }

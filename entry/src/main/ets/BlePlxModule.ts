@@ -1,6 +1,6 @@
-import { BleEvent } from './BleEvent';
+import { BleEvent } from './common/BleEvent';
 import { BleClientManager } from './BleModule'
-import { Resolve, Reject, stringToArrayBuffer } from './BleUtils'
+import { Resolve, Reject, stringToArrayBuffer } from './common/BleUtils'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
 import { deviceControl } from '@kit.MDMKit';
 

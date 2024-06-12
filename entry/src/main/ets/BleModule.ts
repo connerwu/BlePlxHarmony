@@ -1,25 +1,25 @@
 import ble from '@ohos.bluetooth.ble';
 import access from '@ohos.bluetooth.access';
 import { BusinessError } from '@ohos.base';
-import Logger from './Logger'
+import Logger from './common/Logger'
 import { ValuesBucket, ValueType } from '@kit.ArkData';
-import { Resolve, Reject, stringToArrayBuffer, scanResultToJsObjectConverter } from './BleUtils'
+import { Resolve, Reject, stringToArrayBuffer, scanResultToJsObjectConverter } from './common/BleUtils'
 import { constant } from '@kit.ConnectivityKit';
 import { JSON } from '@kit.ArkTS';
-import { BleErrorToJsObjectConverter } from './BleErrorToJsObjectConverter';
+import { BleErrorToJsObjectConverter } from './common/BleErrorToJsObjectConverter';
 import { Service } from './Service';
 import { Characteristic } from './Characteristic';
 import { Descriptor } from './Descriptor';
-import { ServiceFactory } from './utils/ServiceFactory';
-import { Device } from './Device';
-import { BleError,BleErrorCode } from './errors/BleError';
-import { BleEvent } from './BleEvent';
+import { ServiceFactory } from './common/ServiceFactory';
+import { BleDevice } from './BleDevice';
+import { BleError,BleErrorCode } from './common/BleError';
+import { BleEvent } from './common/BleEvent';
 
 // import { RNInstance } from '../../../RNOH/ts';
 
 export class BleClientManager {
   // 连接的设备
-  private connectedDevices: Map<string, Device> = new Map();
+  private connectedDevices: Map<string, BleDevice> = new Map();
 
   // Services
   private discoveredServices: Map<number, Service> = new Map();
@@ -265,7 +265,7 @@ export class BleClientManager {
       device.getDeviceName().then(value => {
         device.on('BLEConnectionStateChange', (state: ble.BLEConnectionChangeState) => {
           Logger.debug('bluetooth connect state changed: ' + state.state);
-          let client = new Device(deviceIdentifier, value)
+          let client = new BleDevice(deviceIdentifier, value)
           client.clientDevice = device;
           if (state.state == constant.ProfileConnectionState.STATE_CONNECTED) {
             this.connectedDevices.set(deviceIdentifier, client);

@@ -1,9 +1,9 @@
 import ble from '@ohos.bluetooth.ble';
 import { Characteristic } from './Characteristic';
-import { IdGenerator } from './utils/IdGenerator';
-import { IdGeneratorKey } from './utils/IdGeneratorKey';
-import Logger from './Logger'
-import { arrayBufferToBase64 } from './BleUtils';
+import { IdGenerator } from './common/IdGenerator';
+import { IdGeneratorKey } from './common/IdGeneratorKey';
+import Logger from './common/Logger'
+import { arrayBufferToBase64 } from './common/BleUtils';
 import { ValuesBucket } from '@kit.ArkData';
 
 export class Descriptor {

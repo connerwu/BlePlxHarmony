@@ -1,11 +1,12 @@
 import ble from '@ohos.bluetooth.ble';
 import { Service } from './Service';
-import { arrayBufferToBase64, BleUtils } from './BleUtils'
+import { arrayBufferToBase64 } from './common/BleUtils'
 import { Descriptor } from './Descriptor'
-import { IdGenerator } from './utils/IdGenerator';
-import { IdGeneratorKey } from './utils/IdGeneratorKey';
-import Logger from './Logger';
+import { IdGenerator } from './common/IdGenerator';
+import { IdGeneratorKey } from './common/IdGeneratorKey';
+import Logger from './common/Logger';
 import { ValuesBucket } from '@kit.ArkData';
+import { InstanceIdGenerator } from './common/InstanceIdGenerator';
 
 export class Characteristic {
 
@@ -35,7 +36,7 @@ export class Characteristic {
   }
 
   static constructorWithNative(service: Service, gattCharacteristic: ble.BLECharacteristic): Characteristic {
-    let id: number = IdGenerator.getIdForKey(new IdGeneratorKey(service.getDeviceID(), gattCharacteristic.characteristicUuid, BleUtils.getInstanceId(gattCharacteristic.characteristicUuid)))
+    let id: number = IdGenerator.getIdForKey(new IdGeneratorKey(service.getDeviceID(), gattCharacteristic.characteristicUuid, InstanceIdGenerator.generateInstanceId(gattCharacteristic.characteristicUuid)))
     return new Characteristic(id, service.getDeviceID(), service.getId(), service.getUuid(), gattCharacteristic);
   }
 
@@ -64,7 +65,7 @@ export class Characteristic {
   }
 
   public getInstanceId(): number {
-    return BleUtils.getInstanceId(this.gattCharacteristic.characteristicUuid);
+    return InstanceIdGenerator.generateInstanceId(this.gattCharacteristic.characteristicUuid);
   }
 
   public getGattDescriptor(uuid: string): ble.BLEDescriptor | null {
